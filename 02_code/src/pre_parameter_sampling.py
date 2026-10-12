@@ -67,9 +67,9 @@ def latin_hypercube_sampling(
     df_params = pd.DataFrame(sample_params, columns=param_names)
 
     # Store file names for each property, with prefix
-    prefix = "data_properties/"
+    # prefix = "data_properties/"
     for prop in property_list:
-        df_params[f"{prop}_file"] = [f"{prefix}{prop_files[prop][i]}" for i in range(n_samples)]
+        df_params[f"{prop}_file"] = [f"{prop_files[prop][i]}" for i in range(n_samples)]
 
 
     # Calculate stress state parameters
@@ -278,9 +278,10 @@ def IS_SH_azi_SH_uniform(
     samples_SH_azi = np.empty(n_samples)
     samples_SH_azi[u1 > u1_quantile] = np.random.uniform(target_SH_azi_low, proposal_SH_azi_low, size=(u1 > u1_quantile).sum())
     samples_SH_azi[u1 <= u1_quantile] = np.random.uniform(proposal_SH_azi_low, target_SH_azi_high, size=(u1 <= u1_quantile).sum())
-    q_SH_azi = np.where((samples_SH_azi >= proposal_SH_azi_low) & (samples_SH_azi < target_SH_azi_high), 
-                alpha / (target_SH_azi_high-target_SH_azi_low), 
-                (1 - alpha) / target_SH_azi_high-target_SH_azi_low)
+    # proposal pdf: each mixture weight is spread over its own component width, not the full target width
+    q_SH_azi = np.where((samples_SH_azi >= proposal_SH_azi_low) & (samples_SH_azi < target_SH_azi_high),
+                alpha / (target_SH_azi_high - proposal_SH_azi_low),
+                (1 - alpha) / (proposal_SH_azi_low - target_SH_azi_low))
 
 
     # SH: 0.2 U(16.2,17) + 0.8 U(17,19.8)
@@ -289,9 +290,10 @@ def IS_SH_azi_SH_uniform(
     samples_SH = np.empty(n_samples)
     samples_SH[u2 > u2_quantile] = np.random.uniform(target_SH_low, proposal_SH_low, size=(u2 > u2_quantile).sum())
     samples_SH[u2 <= u2_quantile] = np.random.uniform(proposal_SH_low, target_SH_high, size=(u2 <= u2_quantile).sum())
-    q_SH = np.where((samples_SH >= proposal_SH_low) & (samples_SH < target_SH_high), 
-            beta / (target_SH_high-target_SH_low), 
-            (1 - beta) / (target_SH_high-target_SH_low))
+    # proposal pdf: each mixture weight is spread over its own component width, not the full target width
+    q_SH = np.where((samples_SH >= proposal_SH_low) & (samples_SH < target_SH_high),
+            beta / (target_SH_high - proposal_SH_low),
+            (1 - beta) / (proposal_SH_low - target_SH_low))
 
     # --- Importance weights ---
     # Since the two variables are independent, total weight = (p_SH_azi * p_SH) / (q_SH_azi*q_SH)
