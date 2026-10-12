@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.stats import qmc
 import sys
 import re
+import io
 from pathlib import Path
 from IPython.display import display
 
@@ -119,6 +120,46 @@ def latin_hypercube_sampling(
     }
 
     return sampling_results
+
+# join the Petrel ensemble parameters to the sampled CMG parameters and store the results in a CSV file
+def merge_petrel_and_sampled_parameters(
+    petrel_parameters_path: str,
+    sampled_parameters_path: str,
+    output_file: str,
+    drop_columns: list = ['LOOP'],
+    ):
+
+    # Values are read and written as text, so both inputs keep their exact digits
+    # Petrel csv: metadata lines, header 'Parameter,...', unit/id lines, then one line per realization
+    lines = Path(petrel_parameters_path).read_text().splitlines()
+    header_index = next(i for i, line in enumerate(lines) if line.startswith('Parameter,'))
+    rows = [line for line in lines[header_index + 1:] if line.startswith('JD_')]
+    df_petrel = pd.read_csv(io.StringIO('\n'.join([lines[header_index]] + rows)), dtype=str)
+    df_petrel = df_petrel.drop(columns=drop_columns)
+
+    df_sampled = pd.read_csv(sampled_parameters_path, dtype=str)
+
+    # pair rows by the realization number in the property file name, not by position
+    def extract_number(name):
+        return int(re.search(r"(\d+)", name).group(1))
+
+    df_petrel['_realization'] = df_petrel['Parameter'].map(extract_number)
+    df_sampled['_realization'] = df_sampled['PORO_file'].map(extract_number)
+    if df_petrel['_realization'].duplicated().any():
+        raise ValueError("Duplicated realization in the Petrel parameter file")
+
+    df_merged = df_petrel.merge(df_sampled, on='_realization', how='right', validate='one_to_one')
+    missing = df_merged.loc[df_merged['Parameter'].isna(), 'PORO_file'].tolist()
+    if missing:
+        raise ValueError(f"No Petrel parameters for: {missing}")
+    not_complete = df_merged.loc[df_merged['RESULT(string)'] != 'Complete', 'Parameter'].tolist()
+    if not_complete:
+        raise ValueError(f"Realizations not Complete in Petrel: {not_complete}")
+    df_merged = df_merged.drop(columns='_realization')
+
+    df_merged.to_csv(output_file, index=False)
+
+    return df_merged
 
 # perform Latin Hypercube Sampling and importance sampling for the Sula CCS and store the results in a CSV file
 def latin_hypercube_and_importance_sampling(

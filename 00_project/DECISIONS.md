@@ -49,3 +49,17 @@ Affected files:
 
 Decision owner:
 Human
+
+## 2026-10-12 grid output only at start and end in the GA runs
+
+Decisions:
+- `JD_geothermal_base_model_GA.dat` comments out `*DATE 2040` and `*DATE 2050`, so grid results are written only at 2030 and 2060 (well results unchanged)
+
+Reasons:
+- Save disk space
+
+Affected files:
+- `01_data/geothermal_Vienna/raw/pre_dat_file_templates/JD_geothermal_base_model_GA.dat`; fault slip analysis of these runs has no intermediate times
+
+Decision owner:
+Human

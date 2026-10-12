@@ -2,6 +2,11 @@
 
 ## High Priority
 
+- After uploading `pre_sim_dat_files/` (dat files, data_gridfiles, data_properties) to Sherlock, compare checksums with the verified copies on Oak
+- Check the .out of case 6 (realization 117, 2 active cells with PORO = 0) for zero-porosity warnings
+
+- Do not open/save sampled-parameter csv files in Excel (it rounds to the displayed digits). Rebuild the master with `merge_petrel_and_sampled_parameters` after any re-sampling
+
 - Re-run parameter sampling / CMG dat generation with the new TEMP files (earlier simulations used the identical F0000 TEMP)
 
 - Set up the repo

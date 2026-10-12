@@ -69,3 +69,46 @@ def test_weights_recover_target_uniform(tmp_path, monkeypatch):
     assert np.sum(w * sh) == pytest.approx((SH_LOW + SH_HIGH) / 2, abs=0.05)
     assert np.sum(w[azi < azi_pl]) == pytest.approx((azi_pl - AZI_LOW) / (AZI_HIGH - AZI_LOW), abs=0.01)
     assert np.sum(w[sh < sh_pl]) == pytest.approx((sh_pl - SH_LOW) / (SH_HIGH - SH_LOW), abs=0.01)
+
+
+# ---- merge_petrel_and_sampled_parameters ----
+PETREL_CSV = """Ensemble name:,'test'
+Number of realizations:,3
+Number of parameters:,2
+
+Parameter,Temp_grad,LOOP,RESULT(string)
+Property id
+Unit
+JD_geothermal_10,0.0261181951353496,1,Complete
+JD_geothermal_11,0.03,2,
+JD_geothermal_12,0.0277625690481277,3,Complete
+"""
+SAMPLED_CSV = """E_kPa,PORO_file
+3.45766e+07,JD_GEOTHERMAL_12_PORO.dat
+3.15114e+07,JD_GEOTHERMAL_10_PORO.dat
+"""
+
+
+def write_inputs(tmp_path, petrel=PETREL_CSV, sampled=SAMPLED_CSV):
+    (tmp_path / "petrel.csv").write_text(petrel)
+    (tmp_path / "sampled.csv").write_text(sampled)
+    return tmp_path / "petrel.csv", tmp_path / "sampled.csv", tmp_path / "out.csv"
+
+
+def test_merge_pairs_by_realization_and_keeps_text(tmp_path):
+    petrel, sampled, out = write_inputs(tmp_path)
+    ps.merge_petrel_and_sampled_parameters(petrel, sampled, out)
+    lines = out.read_text().splitlines()
+    assert lines[0] == "Parameter,Temp_grad,RESULT(string),E_kPa,PORO_file"
+    # order of the sampled file is kept, and digits are not reformatted
+    assert lines[1] == "JD_geothermal_12,0.0277625690481277,Complete,3.45766e+07,JD_GEOTHERMAL_12_PORO.dat"
+    assert lines[2] == "JD_geothermal_10,0.0261181951353496,Complete,3.15114e+07,JD_GEOTHERMAL_10_PORO.dat"
+
+
+def test_merge_rejects_failed_or_missing_realization(tmp_path):
+    petrel, sampled, out = write_inputs(tmp_path, sampled="E_kPa,PORO_file\n1,JD_GEOTHERMAL_11_PORO.dat\n")
+    with pytest.raises(ValueError, match="not Complete"):
+        ps.merge_petrel_and_sampled_parameters(petrel, sampled, out)
+    petrel, sampled, out = write_inputs(tmp_path, sampled="E_kPa,PORO_file\n1,JD_GEOTHERMAL_99_PORO.dat\n")
+    with pytest.raises(ValueError, match="No Petrel parameters"):
+        ps.merge_petrel_and_sampled_parameters(petrel, sampled, out)

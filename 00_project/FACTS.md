@@ -12,7 +12,7 @@
 
 ## Processing
 
-- None
+- GA well layouts (`raw/pre_well_layouts/`) use CMG (i, j) indices (j south to north) (human, 2026-10-12)
 
 ## Literature
 

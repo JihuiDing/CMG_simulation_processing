@@ -18,6 +18,8 @@ Pre- and post-processing for CMG coupled flow-geomechanical simulations
 - Integrity scan of all FINIT/F0000 files (`03_results/2026-10-09_finit_integrity/`)
 - TEMP for all 96 realizations regenerated from the sampled `Temp_grad` (TEMP = Temp_grad * Z + 11, every cell) and verified (`03_results/2026-10-11_temperature_verification/`) (2026-10-10/11)
 - Re-extracted the 25 skipped realizations (human ran the notebook). All 96 realizations / 288 property files verified against raw data (`03_results/2026-10-09_property_verification/`)
+- Checked the new parameter master `260904_sampled_parameters_master.csv`: sampling correct; the Excel-saved master had 3 columns rounded to 3 significant digits, so it was rebuilt with `merge_petrel_and_sampled_parameters` and passes the QC (`03_results/2026-10-12_parameter_sampling_check/`) (2026-10-12)
+- Checked the 192 `param_clustering` dat files (2 GA layouts × 96 parameter sets): all correct (`03_results/2026-10-12_dat_file_check/`) (2026-10-12)
 - FINIT parser hardened (NUL check, declared-size check, exact keyword match); pre2 notebook (`..._Vienna2.ipynb`) no longer copies files and reads the clean in-repo `raw/pre_Petrel_realizations/` directly (2026-10-09)
 
 ## Current Work
@@ -45,7 +47,7 @@ Pre- and post-processing for CMG coupled flow-geomechanical simulations
 
 ## Last Updated
 
-2026-10-11
+2026-10-12
 
 ## Last Agent
 
